@@ -9,4 +9,5 @@ Tool to find offests from shells. Useful for housing resources etc.
 ["classic"] = {
     obj = `classicmotel_shell`
 },
-``` classic would be the \[shell]
+``` 
+classic would be the \[shell]
