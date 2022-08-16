@@ -1,13 +1,11 @@
 # loaf_offsetfinder
-Tool to find offests from shells. Useful for housing resources etc.
+Tool to find offests from shells, used for loaf_housing.
 
 ## How to use
-1. Add the shell you wish to use to the config
-2. Ensure the script
-3. Enter the command `/testshell [shell]` where \[shell] is what you put in the config. For example in: 
-```lua
-["classic"] = {
-    obj = `classicmotel_shell`
-},
-``` 
-classic would be the \[shell]
+1. Put the script into the resources folder
+2. Start the script, you can add it to server.cfg if you want
+3. When ingame, type /testshell [shellname]
+4. Press BACKSPACE to delete the shell
+5. Press ENTER to copy the offset
+
+If you want to change the keybinds, you can do so in the keybind tab in settings

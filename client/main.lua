@@ -1,59 +1,82 @@
-local shell, oldcoords
+local shell, oldCoords
 
-Notify = function(txt)
-    SetNotificationTextEntry("STRING")
-    AddTextComponentString(txt)
-    DrawNotification(0, 1)
+function Notify(txt)
+    BeginTextCommandThefeedPost("STRING")
+    AddTextComponentSubstringPlayerName(txt)
+    EndTextCommandThefeedPostTicker(true, true)
 end
 
-TestShell = function(object, name)
+function GetInstructional(command)
+    local hash = GetHashKey(command)
+    local hex = string.upper(string.format("%x", hash))
+
+    if hash < 0 then
+        hex = string.gsub(hex, string.rep("F", 8), "")
+    end
+
+    return  "~INPUT_" .. hex .. "~"
+end
+
+RegisterCommand("testshell", function(_, args)
+    local shellName = args[1]
+    local shellModel = shellName and GetHashKey(shellName)
+    if not shellName then
+        return Notify(("No such shell \"%s\"."):format(shellName or ""))
+    elseif not IsModelInCdimage(shellModel) then
+        return Notify(("The shell \"%s\" is not in cd image, did you start the shell?"):format(shellName))
+    end
+
     if DoesEntityExist(shell) then 
         DeleteEntity(shell)
     else
-        oldcoords = GetEntityCoords(PlayerPedId())
-    end
-
-    Wait(50)
-
-    shell = CreateObject(object, GetEntityCoords(PlayerPedId()) + vec3(0.0, 0.0, 50.0), true, true)
-    FreezeEntityPosition(shell, true)
-    SetEntityHeading(shell, 0.0)
-    SetEntityCoordsNoOffset(PlayerPedId(), GetEntityCoords(shell))
-
-    while DoesEntityExist(shell) do
-        Wait(0)
-
-        local myCoords, shellCoords = GetEntityCoords(PlayerPedId()) - vec3(0.0,0.0,0.99), GetEntityCoords(shell)
-        local offset = myCoords-shellCoords
-
-        SetTextFont(4)
-        SetTextScale(0.4, 0.4)
-        SetTextDropShadow()
-        SetTextEntry("STRING")
-        AddTextComponentString(("Offset: vector3(%.2f, %.2f, %.2f)"):format(table.unpack(offset)))
-        DrawText(0.16, 0.175)
+        oldCoords = GetEntityCoords(PlayerPedId())
 
         BeginTextCommandDisplayHelp(GetCurrentResourceName())
-        EndTextCommandDisplayHelp(0, 0, false, -1)
-
-        if IsDisabledControlJustReleased(0, 51) then 
-            DeleteEntity(shell)
-            Notify("Shell deleted.")
-            if oldcoords then
-                SetEntityCoords(PlayerPedId(), oldcoords)
-            end
-        elseif IsControlJustReleased(0, 191) then
-            SendNUIMessage({coords = ("vector3(%f, %f, %f)"):format(table.unpack(offset))})
-            Notify("Offset copied to clipboard.")
-        end
+        EndTextCommandDisplayHelp(0, true, true, 0)
     end
-end
 
-RegisterCommand("testshell", function(src, args)
-    AddTextEntry(GetCurrentResourceName(), "Press ~INPUT_CONTEXT~ to delete the shell object.\nPress ~INPUT_FRONTEND_RDOWN~ to copy the offset.")
-    if args[1] and Shells[args[1]] then
-        TestShell(Shells[args[1]].obj, args[1])
-    else
-        Notify(("No such shell \"%s\"."):format(args[1] or ""))
+    shell = CreateObject(shellModel, oldCoords + vec3(0.0, 0.0, 50.0), true, true)
+    FreezeEntityPosition(shell, true)
+    SetEntityHeading(shell, 0.0)
+
+    SetEntityCoordsNoOffset(PlayerPedId(), GetEntityCoords(shell))
+end)
+
+RegisterCommand("deleteshell", function()
+    if not shell then 
+        return 
     end
+
+    DeleteEntity(shell)
+    shell = nil
+    
+    SetEntityCoordsNoOffset(PlayerPedId(), oldCoords)
+    oldCoords = nil
+
+    ClearAllHelpMessages()
+    
+    Notify("Deleted shell")
+end)
+RegisterKeyMapping("deleteshell", "Delete current shell", "keyboard", "BACK")
+
+RegisterCommand("copyoffset", function()
+    if not shell then 
+        return 
+    end
+    
+    local myCoords, shellCoords = GetEntityCoords(PlayerPedId()) - vec3(0.0, 0.0, 0.99), GetEntityCoords(shell)
+    local offset = myCoords - shellCoords
+    SendNUIMessage({
+        coords = ("doorOffset = vector3(%f, %f, %f)\ndoorHeading = %f"):format(offset.x, offset.y, offset.z, GetEntityHeading(PlayerPedId()))
+    })
+
+    Notify("Copied offset to clipboard.")
+end)
+RegisterKeyMapping("copyoffset", "Copy shell offset", "keyboard", "RETURN")
+
+CreateThread(function()
+    AddTextEntry(
+        GetCurrentResourceName(), 
+        ("Press %s to delete the shell object.\nPress %s to copy the offset."):format(GetInstructional("deleteshell"), GetInstructional("copyoffset"))
+    )
 end)
