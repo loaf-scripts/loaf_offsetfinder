@@ -67,7 +67,7 @@ RegisterCommand("copyoffset", function()
     local myCoords, shellCoords = GetEntityCoords(PlayerPedId()) - vec3(0.0, 0.0, 0.99), GetEntityCoords(shell)
     local offset = myCoords - shellCoords
     SendNUIMessage({
-        coords = ("doorOffset = vector3(%f, %f, %f)\ndoorHeading = %f"):format(offset.x, offset.y, offset.z, GetEntityHeading(PlayerPedId()))
+        coords = ("doorOffset = vector3(%f, %f, %f),\ndoorHeading = %f"):format(offset.x, offset.y, offset.z, GetEntityHeading(PlayerPedId()))
     })
 
     Notify("Copied offset to clipboard.")
